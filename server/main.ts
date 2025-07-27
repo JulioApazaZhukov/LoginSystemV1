@@ -8,8 +8,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// add a username
-app.post("/auth/register", async (req: Request, res: Response) => {
+// register a new user
+app.post("/register", async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
     const newUser = await pool.query(
@@ -22,6 +22,18 @@ app.post("/auth/register", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+// authenticate a user
+app.post("/login", async (_req: Request, res: Response) => {
+  try {
+    const authUser = await pool.query("SELECT * FROM userbase");
+    console.log(authUser);
+  } catch (err) {
+    console.error((err as Error).message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 
 app.listen(3000, () => {
   console.log("server has started on port 3000");
