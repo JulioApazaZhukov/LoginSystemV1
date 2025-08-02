@@ -24,10 +24,21 @@ app.post("/register", async (req: Request, res: Response) => {
 });
 
 // authenticate a user
-app.post("/login", async (_req: Request, res: Response) => {
+app.post("/login", async (req: Request, res: Response) => {
   try {
-    const authUser = await pool.query("SELECT * FROM userbase");
-    console.log(authUser);
+    const { username, password } = req.body;
+    // Query for a user with the given username and password
+    const result = await pool.query(
+      "SELECT * FROM userbase WHERE username = $1 AND password = $2",
+      [username, password]
+    );
+    if (result.rows.length > 0) {
+      // Authentication successful
+      res.json({ success: true, user: result.rows[0] });
+    } else {
+      // Authentication failed
+      res.status(401).json({ success: false, error: "Invalid credentials" });
+    }
   } catch (err) {
     console.error((err as Error).message);
     res.status(500).json({ error: "Server error" });
