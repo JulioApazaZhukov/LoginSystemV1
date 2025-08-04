@@ -12,11 +12,21 @@ app.use(express.json());
 app.post("/register", async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
+    const userExists = await pool.query(
+      "SELECT * FROM userbase WHERE username = $1",
+      [username]
+    );
+    if (userExists.rows.length > 0) {
+      return res.status(409).json({ error: "Username already exists" });
+    }
     const newUser = await pool.query(
       "INSERT INTO userbase (username, password) VALUES($1, $2) RETURNING *",
       [username, password]
     );
-    res.json(newUser.rows[0]);
+    res.status(201).json({ success: true, user: newUser.rows[0] });
   } catch (err) {
     console.error((err as Error).message);
     res.status(500).json({ error: "Server error" });
@@ -27,7 +37,9 @@ app.post("/register", async (req: Request, res: Response) => {
 app.post("/login", async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
-    // Query for a user with the given username and password
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password are required" });
+    }
     const result = await pool.query(
       "SELECT * FROM userbase WHERE username = $1 AND password = $2",
       [username, password]
@@ -44,7 +56,6 @@ app.post("/login", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
 
 app.listen(3000, () => {
   console.log("server has started on port 3000");
